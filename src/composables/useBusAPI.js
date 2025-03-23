@@ -7,6 +7,10 @@ export async function fetchBusPassagesAPI() {
 }
 
 export async function fetchBusPositionsAPI(busIds) {
+    if(busIds.length === 0) return {
+        total_count: 0,
+        results: []
+    };
     let url = 'https://data.explore.star.fr/api/explore/v2.1/catalog/datasets/tco-bus-vehicules-position-tr/records?select=idbus, coordonnees, ecartsecondes, nomcourtligne&where='
     url += busIds.map((id, index) => {
         if (index === busIds.length - 1) {
