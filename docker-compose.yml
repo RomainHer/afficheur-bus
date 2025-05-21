@@ -1,6 +1,8 @@
+name: afficheur-bus
+
 services:
   web:
     build: .
     ports:
       - "8081:80"
-    restart: always
+    restart: unless-stopped
