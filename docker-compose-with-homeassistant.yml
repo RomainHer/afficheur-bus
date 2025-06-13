@@ -3,7 +3,7 @@ name: docker-raspberry-pi-home
 services:
   web:
     container_name: afficheur-bus
-    build: ./afficheur-bus
+    build: ./
     ports:
       - "8080:80"
     restart: unless-stopped
