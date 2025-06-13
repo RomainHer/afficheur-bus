@@ -1,0 +1,19 @@
+name: docker-raspberry-pi-home
+
+services:
+  web:
+    container_name: afficheur-bus
+    build: ./afficheur-bus
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ./ha_config:/config
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8123:8123"
+    restart: unless-stopped
