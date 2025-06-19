@@ -25,6 +25,18 @@ export async function fetchBusPositionsAPI(busIds) {
     return response.json();
 }
 
+// Nouvelle fonction combinée pour les deux APIs
+export async function fetchBusData() {
+    const passages = await fetchBusPassagesAPI()
+    const busIds = passages.results.map(passage => passage.idbus).filter(Boolean)
+    const positions = await fetchBusPositionsAPI(busIds)
+    
+    return {
+        passages,
+        positions
+    }
+}
+
 
 
 

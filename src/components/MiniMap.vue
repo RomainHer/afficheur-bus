@@ -1,11 +1,12 @@
 <script setup>
 import { ref, onMounted, nextTick, watch } from 'vue';
-import { fetchBusPassagesAPI, fetchBusPositionsAPI } from '../composables/useBusAPI';
+import { useSynchronizedRefresh } from '../composables/useSynchronizedRefresh';
+import { fetchBusData } from '../composables/useBusAPI';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const busPositions = ref([]);
-const isLoading = ref(true);
+const { data: busData, isLoading, error } = useSynchronizedRefresh(fetchBusData, 60000, 'MiniMap');
+
 const mapContainer = ref(null);
 let map = null;
 let busMarkers = [];
@@ -24,14 +25,14 @@ const busStopIcon = L.divIcon({
   className: 'bus-stop-icon',
   html: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>',
   iconSize: [32, 32],
-  iconAnchor: [16, 16],
+  iconAnchor: [16, 32],
   popupAnchor: [0, -16]
 });
 
 const initMap = async () => {
   await nextTick();
   
-  if (mapContainer.value) {
+  if (mapContainer.value && !map) {
     try {
       map = L.map(mapContainer.value, {
         center: [48.10226173913813, -1.6569458420151653],
@@ -40,12 +41,10 @@ const initMap = async () => {
         attributionControl: false
       });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        attribution: '©OpenStreetMap, ©CartoDB'
       }).addTo(map);
-
-      const mapPane = map.getPane('overlayPane');
-      mapPane.style.clipPath = 'circle(500px at center)';
 
       map.invalidateSize();
       
@@ -54,7 +53,8 @@ const initMap = async () => {
         .bindPopup('Arrêt de bus')
         .addTo(map);
       
-      if (busPositions.value.results) {
+      // Si les données sont déjà disponibles, ajouter les marqueurs de bus
+      if (busData.value?.positions?.results) {
         updateBusMarkers();
       }
     } catch (error) {
@@ -69,8 +69,8 @@ const updateBusMarkers = () => {
   busMarkers.forEach(marker => marker.remove());
   busMarkers = [];
 
-  if (busPositions.value.results) {
-    busPositions.value.results.forEach(bus => {
+  if (busData.value?.positions?.results) {
+    busData.value.positions.results.forEach(bus => {
       const marker = L.marker([bus.coordonnees.lat, bus.coordonnees.lon], { icon: busIcon })
         .bindPopup(`Bus ${bus.nomcourtligne}<br>Retard: ${bus.ecartsecondes}s`)
         .addTo(map);
@@ -79,44 +79,48 @@ const updateBusMarkers = () => {
   }
 };
 
-watch(isLoading, (newValue) => {
-  if (!newValue) {
-    initMap();
-  }
+// Initialiser la carte dès que le composant est monté
+onMounted(() => {
+  initMap();
 });
 
-watch(busPositions, () => {
+// Mettre à jour les marqueurs quand les données changent
+watch(busData, () => {
   if (map) {
     updateBusMarkers();
   }
-});
+}, { deep: true });
 
-onMounted(() => {
-  // Initialisation vide
-});
-
-fetchBusPassagesAPI().then(data => {
-  const busIds = [];
-  data.results.forEach(passage => {
-    if (passage.idbus) {
-      busIds.push(passage.idbus);
-    }
-  });
-  fetchBusPositionsAPI(busIds).then(data => {
-    busPositions.value = data;
-    isLoading.value = false;
-  });
+// Réinitialiser la carte si elle n'existe pas et que le chargement est terminé
+watch(isLoading, (newValue) => {
+  if (!newValue && !map) {
+    initMap();
+  }
 });
 </script>
 
 <template>
-  <div class="w-1/2">
-    <h1 class="text-xl font-bold">Mini Map</h1>
-    <div class="relative w-full h-[500px]">
-      <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white rounded-full">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+  <div class="w-1/2 flex flex-col" style="height: calc(100vh - 48px);">
+    <div class="bg-gray-900 rounded-lg p-4 mb-4 border-l-4 border-blue-400">
+      <h1 class="text-2xl font-bold text-blue-400 text-center tracking-wider">CARTE EN TEMPS RÉEL</h1>
+      <div class="text-center text-gray-300 text-sm mt-1">POSITION DES BUS</div>
+      <div class="text-center text-xs text-gray-400 mt-1">
+        Mise à jour synchronisée toutes les minutes
       </div>
-      <div v-else ref="mapContainer" class="absolute inset-0 rounded-full overflow-hidden"></div>
+    </div>
+    
+    <div v-if="error" class="bg-red-900 rounded-lg p-4 mb-4 text-red-200">
+      Erreur: {{ error }}
+    </div>
+    
+    <div class="flex-1 relative rounded-xl overflow-hidden border-2 border-gray-600">
+      <!-- Container de la carte - toujours présent -->
+      <div ref="mapContainer" class="absolute inset-0"></div>
+      
+      <!-- Spinner de chargement - par-dessus la carte -->
+      <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 rounded-xl z-10">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -125,7 +129,7 @@ fetchBusPassagesAPI().then(data => {
 .leaflet-container {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 12px;
   z-index: 1;
 }
 
