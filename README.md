@@ -105,9 +105,9 @@ afficheur-bus/
 
 ## 📦 À faire
 
-- [ ] Auto-refresh des données API
-- [ ] Gestion des erreurs de réseau
-- [ ] Ajout d’un état de chargement
+- [x] Auto-refresh des données API
+- [x] Gestion des erreurs de réseau
+- [x] Ajout d’un état de chargement
 - [ ] Ajout d'une config facile pour changer l'arrêt cible
 
 ---
