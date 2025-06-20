@@ -5,7 +5,7 @@ services:
     container_name: afficheur-bus
     build: ./
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
     restart: unless-stopped
 
   homeassistant:
@@ -15,5 +15,8 @@ services:
       - ./ha_config:/config
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - "8123:8123"
+      - "${HASS_PORT:-8123}:8123"
     restart: unless-stopped
+    privileged: true
+    devices:
+      - ${ZIGBEE_DONGLE_PATH:-/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00}:${ZIGBEE_DONGLE_DEVICE:-/dev/ttyUSB0}
