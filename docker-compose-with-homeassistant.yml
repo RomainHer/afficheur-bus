@@ -1,22 +1,51 @@
-name: docker-raspberry-pi-home
+version: '3.8'
 
 services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    environment:
+      - TZ=Europe/Paris
+    ports:
+      - "${HASS_PORT:-8123}:8123"
+    volumes:
+      - ./ha_config:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - "${ZIGBEE_DONGLE_PATH:-/dev/ttyUSB0}:${ZIGBEE_DONGLE_DEVICE:-/dev/ttyUSB0}"
+
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mqtt
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt
+    container_name: zigbee2mqtt
+    depends_on:
+      - mosquitto
+    volumes:
+      - ./zigbee2mqtt:/app/data
+      - /run/udev:/run/udev:ro
+    ports:
+      - 8080:8080
+    devices:
+      - "${ZIGBEE_DONGLE_PATH:-/dev/ttyUSB0}:${ZIGBEE_DONGLE_DEVICE:-/dev/ttyUSB0}"
+    restart: unless-stopped
+
   web:
     container_name: afficheur-bus
     build: ./
     ports:
-      - "${WEB_PORT:-8080}:80"
+      - "${WEB_PORT:-8081}:80"
     restart: unless-stopped
 
-  homeassistant:
-    container_name: homeassistant
-    image: ghcr.io/home-assistant/home-assistant:stable
-    volumes:
-      - ./ha_config:/config
-      - /etc/localtime:/etc/localtime:ro
-    ports:
-      - "${HASS_PORT:-8123}:8123"
-    restart: unless-stopped
-    privileged: true
-    devices:
-      - ${ZIGBEE_DONGLE_PATH:-/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus-if00}:${ZIGBEE_DONGLE_DEVICE:-/dev/ttyUSB0}
+volumes:
+  mosquitto_data:
+  mosquitto_log:

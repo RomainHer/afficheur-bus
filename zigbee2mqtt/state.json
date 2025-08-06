@@ -1,0 +1,15 @@
+{
+    "0x881a14fffeef3a4b": {
+        "battery": 100,
+        "humidity": 71.2,
+        "temperature": 25.9,
+        "comfort_temperature_min": 19,
+        "comfort_temperature_max": 27,
+        "comfort_humidity_min": 40,
+        "comfort_humidity_max": 60,
+        "temperature_units": "celsius",
+        "temperature_calibration": 0,
+        "humidity_calibration": 0,
+        "linkquality": 126
+    }
+}

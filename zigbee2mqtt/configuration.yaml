@@ -1,0 +1,14 @@
+homeassistant:
+  enabled: true
+mqtt:
+  base_topic: zigbee2mqtt
+  server: mqtt://mosquitto
+serial:
+  port: /dev/ttyUSB0
+frontend:
+  enabled: true
+  port: 8080
+version: 4
+devices:
+  '0x881a14fffeef3a4b':
+    friendly_name: '0x881a14fffeef3a4b'
