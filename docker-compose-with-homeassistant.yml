@@ -13,8 +13,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
     privileged: true
-    devices:
-      - "${ZIGBEE_DONGLE_PATH:-/dev/ttyUSB0}:${ZIGBEE_DONGLE_DEVICE:-/dev/ttyUSB0}"
 
   mosquitto:
     image: eclipse-mosquitto
