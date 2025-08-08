@@ -28,4 +28,5 @@ dist-ssr
 ha_config/
 
 # Zigbee2MQTT
-zigbee2mqtt/
+zigbee2mqtt/*
+!zigbee2mqtt/configuration.yaml
