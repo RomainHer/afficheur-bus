@@ -34,7 +34,7 @@ services:
     ports:
       - 8080:8080
     devices:
-      - "${ZIGBEE_DONGLE_PATH:-/dev/ttyUSB0}:${ZIGBEE_DONGLE_DEVICE:-/dev/ttyUSB0}"
+      - "${ZIGBEE_DONGLE_PATH:-/dev/ttyUSB0}:/dev/ttyUSB0"
     restart: unless-stopped
 
   web:
